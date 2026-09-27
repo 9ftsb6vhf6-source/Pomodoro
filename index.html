@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+<link rel="apple-touch-icon" href="icon.jpg">
   <meta charset="UTF-8">
   <title>Focus Timer</title>
   <style>
@@ -372,17 +373,6 @@
       }
     }
 
-    /* Ukrywanie paska Tiiny.host */
-    div[style*="tiiny.host"],
-    a[href*="tiiny.host"],
-    [id*="tiiny"],
-    [class*="tiiny"],
-    footer[style*="z-index"] {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
   </style>
 </head>
 <body>
@@ -891,23 +881,6 @@
       updateDisplay();
       showDashboardView();
     }
-
-    // Skrypt usuwający pasek tiiny.host z kodu strony
-    window.addEventListener('DOMContentLoaded', () => {
-      const removeTiinyBanner = () => {
-        document.querySelectorAll('a[href*="tiiny.host"]').forEach(el => {
-          let parent = el.closest('div');
-          if (parent && parent !== document.body && !parent.id.includes('Wrapper')) {
-            parent.remove();
-          } else {
-            el.remove();
-          }
-        });
-      };
-      removeTiinyBanner();
-      setTimeout(removeTiinyBanner, 500);
-      setTimeout(removeTiinyBanner, 1500);
-    });
 
     setupMode('focus');
     updateDisplay();

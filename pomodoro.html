@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Focus Timer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #18181b;
+      color: #f4f4f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      user-select: none;
+      transition: background 0.3s ease;
+    }
+    .wrapper {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 1200px;
+      width: 100%;
+    }
+    .card {
+      background: #27272a;
+      padding: 2.2rem;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 320px;
+    }
+    .side-card {
+      background: #27272a;
+      padding: 1.6rem;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      width: 330px;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+    }
+    .side-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .header-titles.left-aligned {
+      align-items: flex-start;
+      text-align: left;
+    }
+    .header-titles h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e4e4e7;
+    }
+    .header-titles .sub-info {
+      font-size: 0.78rem;
+      color: #a1a1aa;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .total-week-badge {
+      font-size: 0.82rem;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+    .badge-today {
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+    .nav-btn {
+      background: #3f3f46;
+      color: #f4f4f5;
+      border: none;
+      border-radius: 8px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .nav-btn:hover:not(:disabled) { background: #52525b; }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Widok tygodniowy */
+    .week-days-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex-grow: 1;
+    }
+    .week-day-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0.75rem;
+      border-radius: 12px;
+      background: #1f1f23;
+    }
+    .week-day-row.is-today {
+      outline: 1.5px solid #38bdf8;
+      background: #23272f;
+    }
+    .day-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #a1a1aa;
+      width: 26px;
+    }
+    .week-day-row.is-today .day-name {
+      color: #38bdf8;
+    }
+
+    /* Licznik gwiazdek */
+    .bonus-counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #facc15;
+    }
+    .bonus-counter .star-icon {
+      font-size: 0.85rem;
+      line-height: 1;
+      text-shadow: 0 0 6px rgba(250, 204, 21, 0.6);
+    }
+
+    /* 3 stałe kratki */
+    .boxes-container {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .focus-box {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: #333338;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .focus-box.filled {
+      background: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    #status {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #38bdf8;
+      margin-bottom: 0.5rem;
+      transition: color 0.3s ease;
+    }
+    .timer-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 4.2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin: 0.5rem 0 1rem;
+      line-height: 1;
+    }
+    .editable-minutes {
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 0 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .editable-minutes:hover {
+      background: #3f3f46;
+      color: #38bdf8;
+    }
+    .time-input-inline {
+      width: 100px;
+      font-size: 3.8rem;
+      font-weight: 700;
+      background: #18181b;
+      color: #38bdf8;
+      border: 2px solid #38bdf8;
+      border-radius: 12px;
+      text-align: center;
+      outline: none;
+    }
+    .slider-box {
+      margin: 1rem 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: #a1a1aa;
+    }
+    input[type="range"] {
+      cursor: pointer;
+      accent-color: #38bdf8;
+      transition: accent-color 0.3s ease;
+    }
+
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .secondary-buttons-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .secondary-buttons-row button {
+      flex: 1;
+    }
+
+    button {
+      font-weight: 600;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, background 0.3s ease, color 0.3s ease, transform 0.1s ease;
+    }
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+
+    #startBtn {
+      padding: 0.95rem 1.5rem;
+      font-size: 1.15rem;
+      width: 100%;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-focus {
+      background: #38bdf8;
+      color: #09090b;
+    }
+    .btn-break {
+      background: #34d399;
+      color: #09090b;
+    }
+    button.secondary { 
+      background: #3f3f46; 
+      color: #f4f4f5; 
+      padding: 0.65rem 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    /* Tabela historii */
+    .table-container {
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    th {
+      color: #71717a;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #3f3f46;
+      font-weight: 600;
+    }
+    td {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333338;
+      color: #d4d4d8;
+    }
+    .tag-focus { color: #38bdf8; font-weight: 600; }
+    .tag-break { color: #34d399; font-weight: 600; }
+
+    /* EKRAN AKTYWNY */
+    #activeView {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #18181b;
+      z-index: 100;
+    }
+    #activeStatus {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+    #activeTimer {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .active-actions {
+      margin-top: 1.8rem;
+      display: flex;
+      gap: 0.8rem;
+    }
+    .active-btn {
+      background: #27272a;
+      color: #f4f4f5;
+      border: 1px solid #3f3f46;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.95rem;
+      border-radius: 12px;
+    }
+    .active-btn:hover { background: #3f3f46; }
+    .btn-resume {
+      background: #38bdf8;
+      color: #09090b;
+      border: none;
+    }
+    .btn-resume.break-resume {
+      background: #34d399;
+      color: #09090b;
+    }
+
+    .view-focus #activeStatus {
+      color: #38bdf8;
+      font-size: 0.9rem;
+    }
+    .view-focus #activeTimer {
+      font-size: 3.5rem;
+      color: #f4f4f5;
+    }
+
+    .view-break #activeStatus {
+      color: #34d399;
+      font-size: 2rem;
+    }
+    .view-break #activeTimer {
+      font-size: 14vw;
+      color: #34d399;
+      text-shadow: 0 0 40px rgba(52, 211, 153, 0.2);
+    }
+    @media (min-width: 900px) {
+      .view-break #activeTimer {
+        font-size: 9rem;
+      }
+    }
+
+    /* Ukrywanie paska Tiiny.host */
+    div[style*="tiiny.host"],
+    a[href*="tiiny.host"],
+    [id*="tiiny"],
+    [class*="tiiny"],
+    footer[style*="z-index"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper" id="dashboardWrapper">
+    <!-- 1. Lewy panel: Kalendarz tygodniowy z sumą tygodnia -->
+    <div class="side-card">
+      <div class="side-card-header">
+        <button class="nav-btn" onclick="prevWeek()" title="Poprzedni tydzień">‹</button>
+        <div class="header-titles">
+          <h3 id="weekLabel">Ten tydzień</h3>
+          <span class="sub-info" id="weekRangeLabel">(od ... do ...)</span>
+          <span class="total-week-badge" id="weekTotalLabel">0 sesji (0 min skupienia)</span>
+        </div>
+        <button class="nav-btn" id="nextWeekBtn" onclick="nextWeek()" title="Następny tydzień">›</button>
+      </div>
+      <div class="week-days-list" id="weekDaysList"></div>
+    </div>
+
+    <!-- 2. Środkowy panel: Główny zegar -->
+    <div class="card">
+      <div id="status">Focus</div>
+
+      <div class="timer-container">
+        <span id="minDisplay" class="editable-minutes" title="Kliknij, aby wpisać minuty">25</span>
+        <input type="number" id="minInlineInput" class="time-input-inline" style="display: none;" min="1" max="180">
+        <span>:</span>
+        <span id="secDisplay">00</span>
+      </div>
+
+      <div class="slider-box">
+        <label id="sliderLabel" for="timeSlider">Ustaw czas Focusu (maks 90 min):</label>
+        <input type="range" id="timeSlider" min="1" max="90" value="25">
+      </div>
+
+      <div class="buttons-container">
+        <button id="startBtn" onclick="toggleTimer()">Start</button>
+        <div class="secondary-buttons-row">
+          <button class="secondary" onclick="resetTimer()">Reset</button>
+          <button id="toggleModeBtn" onclick="manualToggleMode()">Przełącz na: Przerwa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Prawy panel: Dzisiejsza historia z podsumowaniem dnia -->
+    <div class="side-card">
+      <div class="side-card-header">
+        <div class="header-titles left-aligned">
+          <h3>Dzisiejsze sesje</h3>
+          <span class="badge-today" id="todaySummaryLabel">0 sesji (0 min skupienia)</span>
+        </div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Godzina</th>
+              <th>Tryb</th>
+              <th>Czas</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr id="emptyRow">
+              <td colspan="3" style="text-align: center; color: #71717a; padding: 1.5rem 0;">Brak ukończonych sesji</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ekran czysty podczas pracy -->
+  <div id="activeView">
+    <div id="activeStatus">Focus</div>
+    <div id="activeTimer">25:00</div>
+    <div class="active-actions">
+      <button class="active-btn" id="activePauseBtn" onclick="pauseActiveTimer()">Pauza</button>
+      <button class="active-btn btn-resume" id="activeResumeBtn" style="display: none;" onclick="resumeActiveTimer()">Kontynuuj</button>
+      <button class="active-btn" id="activeStopBtn" style="display: none;" onclick="stopActiveTimer()">Zatrzymaj</button>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'focus'; 
+    let durationMinutes = 25;
+    let timeLeft = durationMinutes * 60;
+    let timerId = null;
+    let isRunning = false;
+    let weekOffset = 0;
+
+    const minDisplay = document.getElementById('minDisplay');
+    const secDisplay = document.getElementById('secDisplay');
+    const minInlineInput = document.getElementById('minInlineInput');
+    const timeSlider = document.getElementById('timeSlider');
+    const sliderLabel = document.getElementById('sliderLabel');
+    const statusDisplay = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    const historyBody = document.getElementById('historyBody');
+    const weekDaysList = document.getElementById('weekDaysList');
+    const weekLabel = document.getElementById('weekLabel');
+    const weekRangeLabel = document.getElementById('weekRangeLabel');
+    const weekTotalLabel = document.getElementById('weekTotalLabel');
+    const nextWeekBtn = document.getElementById('nextWeekBtn');
+    const todaySummaryLabel = document.getElementById('todaySummaryLabel');
+
+    const dashboardWrapper = document.getElementById('dashboardWrapper');
+    const activeView = document.getElementById('activeView');
+    const activeStatus = document.getElementById('activeStatus');
+    const activeTimer = document.getElementById('activeTimer');
+    const activePauseBtn = document.getElementById('activePauseBtn');
+    const activeResumeBtn = document.getElementById('activeResumeBtn');
+    const activeStopBtn = document.getElementById('activeStopBtn');
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function getStoredSessions() {
+      try {
+        return JSON.parse(localStorage.getItem('pomodoro_sessions') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveSessionToStorage(session) {
+      const sessions = getStoredSessions();
+      sessions.push(session);
+      localStorage.setItem('pomodoro_sessions', JSON.stringify(sessions));
+      renderWeekTracker();
+      updateTodaySummary();
+    }
+
+    function formatTimeHours(mins) {
+      if (mins < 60) return `${mins} min`;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}h ${m} min` : `${h}h`;
+    }
+
+    function getSessionWord(count) {
+      if (count === 1) return 'sesja';
+      const mod10 = count % 10;
+      const mod100 = count % 100;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+        return 'sesje';
+      }
+      return 'sesji';
+    }
+
+    function updateTodaySummary() {
+      const sessions = getStoredSessions();
+      const todayStr = new Date().toDateString();
+      
+      const todayFocusSessions = sessions.filter(s => {
+        return new Date(s.date).toDateString() === todayStr;
+      });
+
+      const count = todayFocusSessions.length;
+      const totalMinutes = todayFocusSessions.reduce((acc, s) => acc + (Number(s.duration) || 25), 0);
+
+      todaySummaryLabel.textContent = `${count} ${getSessionWord(count)} (${formatTimeHours(totalMinutes)} skupienia)`;
+    }
+
+    function playFocusEndChime() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.4);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + idx * 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.4 + 0.9);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.4);
+        osc.stop(audioCtx.currentTime + idx * 0.4 + 0.9);
+      });
+    }
+
+    function ringAcousticBell(time) {
+      const harmonics = [880, 1760, 2640, 3520];
+      const gains = [0.35, 0.18, 0.08, 0.04];
+      harmonics.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(gains[i], time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.95);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(time);
+        osc.stop(time + 0.95);
+      });
+    }
+
+    function playBreakEndBell() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const step = 1.0;
+      const pauseBetween = 1.6;
+      const seriesLength = 2 * step + pauseBetween;
+
+      for (let s = 0; s < 3; s++) {
+        const sStart = now + s * seriesLength;
+        ringAcousticBell(sStart);
+        ringAcousticBell(sStart + step);
+        ringAcousticBell(sStart + step * 2);
+      }
+    }
+
+    function updateDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      const formattedMin = String(minutes).padStart(2, '0');
+      const formattedSec = String(seconds).padStart(2, '0');
+
+      minDisplay.textContent = formattedMin;
+      secDisplay.textContent = formattedSec;
+      activeTimer.textContent = `${formattedMin}:${formattedSec}`;
+      document.title = `(${formattedMin}:${formattedSec}) ${currentMode === 'focus' ? 'Focus' : 'Przerwa'}`;
+    }
+
+    function showActiveView() {
+      dashboardWrapper.style.display = 'none';
+      activeView.style.display = 'flex';
+      activePauseBtn.style.display = 'inline-block';
+      activeResumeBtn.style.display = 'none';
+      activeStopBtn.style.display = 'none';
+
+      if (currentMode === 'focus') {
+        activeView.className = 'view-focus';
+        activeStatus.textContent = 'Focus';
+        activeResumeBtn.className = 'active-btn btn-resume';
+      } else {
+        activeView.className = 'view-break';
+        activeStatus.textContent = 'Przerwa';
+        activeResumeBtn.className = 'active-btn btn-resume break-resume';
+      }
+    }
+
+    function showDashboardView() {
+      activeView.style.display = 'none';
+      dashboardWrapper.style.display = 'flex';
+    }
+
+    function setMinutes(newMin) {
+      const maxLimit = currentMode === 'focus' ? 90 : 30;
+      newMin = Math.max(1, Math.min(maxLimit, parseInt(newMin, 10) || 1));
+      durationMinutes = newMin;
+      timeSlider.value = newMin;
+
+      if (!isRunning) {
+        timeLeft = durationMinutes * 60;
+        updateDisplay();
+      }
+    }
+
+    minDisplay.addEventListener('click', () => {
+      if (isRunning) return;
+      minDisplay.style.display = 'none';
+      minInlineInput.style.display = 'inline-block';
+      minInlineInput.max = currentMode === 'focus' ? 90 : 30;
+      minInlineInput.value = Math.floor(timeLeft / 60);
+      minInlineInput.focus();
+      minInlineInput.select();
+    });
+
+    function saveInlineMinutes() {
+      minInlineInput.style.display = 'none';
+      minDisplay.style.display = 'inline-block';
+      setMinutes(minInlineInput.value);
+    }
+
+    minInlineInput.addEventListener('blur', saveInlineMinutes);
+    minInlineInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveInlineMinutes();
+    });
+
+    timeSlider.addEventListener('input', (e) => {
+      setMinutes(e.target.value);
+    });
+
+    function logSession() {
+      const emptyRow = document.getElementById('emptyRow');
+      if (emptyRow) emptyRow.remove();
+
+      const now = new Date();
+      const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const modeLabel = currentMode === 'focus' ? 'Focus' : 'Przerwa';
+      const modeClass = currentMode === 'focus' ? 'tag-focus' : 'tag-break';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${timeString}</td>
+        <td class="${modeClass}">${modeLabel}</td>
+        <td>${durationMinutes} min</td>
+      `;
+      historyBody.prepend(row);
+
+      if (currentMode === 'focus') {
+        saveSessionToStorage({
+          date: now.toISOString(),
+          duration: durationMinutes
+        });
+      }
+    }
+
+    function getMonday(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      d.setDate(diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function formatDate(d) {
+      return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function renderWeekTracker() {
+      const now = new Date();
+      const currentMonday = getMonday(now);
+      currentMonday.setDate(currentMonday.getDate() + (weekOffset * 7));
+
+      const currentSunday = new Date(currentMonday);
+      currentSunday.setDate(currentSunday.getDate() + 6);
+      currentSunday.setHours(23, 59, 59, 999);
+
+      if (weekOffset === 0) {
+        weekLabel.textContent = 'Ten tydzień';
+      } else if (weekOffset === -1) {
+        weekLabel.textContent = 'Poprzedni tydzień';
+      } else if (weekOffset === 1) {
+        weekLabel.textContent = 'Następny tydzień';
+      } else {
+        weekLabel.textContent = 'Tydzień';
+      }
+
+      weekRangeLabel.textContent = `(od ${formatDate(currentMonday)} do ${formatDate(currentSunday)})`;
+      nextWeekBtn.disabled = weekOffset >= 1;
+
+      const dayNames = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'];
+      weekDaysList.innerHTML = '';
+      const sessions = getStoredSessions();
+
+      let weekTotalMinutes = 0;
+      let weekTotalCount = 0;
+
+      for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(currentMonday);
+        dayDate.setDate(dayDate.getDate() + i);
+
+        const isToday = now.toDateString() === dayDate.toDateString();
+        
+        const daySessions = sessions.filter(s => {
+          const sDate = new Date(s.date);
+          return sDate.toDateString() === dayDate.toDateString();
+        });
+
+        const count = daySessions.length;
+        const dayMins = daySessions.reduce((acc, s) => acc + (Number(s.duration) || 25), 0);
+        
+        weekTotalMinutes += dayMins;
+        weekTotalCount += count;
+
+        const row = document.createElement('div');
+        row.className = `week-day-row ${isToday ? 'is-today' : ''}`;
+
+        const dayInfo = document.createElement('div');
+        dayInfo.className = 'day-info';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'day-name';
+        nameSpan.textContent = dayNames[i];
+        dayInfo.appendChild(nameSpan);
+
+        if (count > 3) {
+          const bonusCount = count - 3;
+          const badge = document.createElement('span');
+          badge.className = 'bonus-counter';
+          badge.title = `Bonusowe sesje ponad cel: ${bonusCount}`;
+          badge.innerHTML = `<span class="star-icon">★</span>+${bonusCount}`;
+          dayInfo.appendChild(badge);
+        }
+
+        const boxesDiv = document.createElement('div');
+        boxesDiv.className = 'boxes-container';
+
+        for (let b = 1; b <= 3; b++) {
+          const box = document.createElement('div');
+          box.className = `focus-box ${b <= count ? 'filled' : ''}`;
+          boxesDiv.appendChild(box);
+        }
+
+        row.appendChild(dayInfo);
+        row.appendChild(boxesDiv);
+        weekDaysList.appendChild(row);
+      }
+
+      weekTotalLabel.textContent = `${weekTotalCount} ${getSessionWord(weekTotalCount)} (${formatTimeHours(weekTotalMinutes)} skupienia)`;
+    }
+
+    function prevWeek() {
+      weekOffset--;
+      renderWeekTracker();
+    }
+
+    function nextWeek() {
+      if (weekOffset < 1) {
+        weekOffset++;
+        renderWeekTracker();
+      }
+    }
+
+    function setupMode(targetMode) {
+      currentMode = targetMode;
+      if (currentMode === 'break') {
+        statusDisplay.textContent = 'Przerwa';
+        statusDisplay.style.color = '#34d399';
+        startBtn.className = 'btn-break';
+        toggleModeBtn.className = 'secondary';
+        toggleModeBtn.textContent = 'Przełącz na: Focus';
+
+        timeSlider.max = 30;
+        timeSlider.style.accentColor = '#34d399';
+        sliderLabel.textContent = 'Ustaw czas przerwy (maks 30 min):';
+        setMinutes(5);
+      } else {
+        statusDisplay.textContent = 'Focus';
+        statusDisplay.style.color = '#38bdf8';
+        startBtn.className = 'btn-focus';
+        toggleModeBtn.className = 'secondary';
+        toggleModeBtn.textContent = 'Przełącz na: Przerwa';
+
+        timeSlider.max = 90;
+        timeSlider.style.accentColor = '#38bdf8';
+        sliderLabel.textContent = 'Ustaw czas Focusu (maks 90 min):';
+        setMinutes(25);
+      }
+    }
+
+    function startCounting() {
+      isRunning = true;
+      timerId = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateDisplay();
+        } else {
+          clearInterval(timerId);
+          isRunning = false;
+          logSession();
+          showDashboardView();
+
+          if (currentMode === 'focus') {
+            playFocusEndChime();
+            setupMode('break');
+          } else {
+            playBreakEndBell();
+            setupMode('focus');
+          }
+        }
+      }, 1000);
+    }
+
+    function toggleTimer() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      showActiveView();
+      startCounting();
+    }
+
+    function pauseActiveTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+      activePauseBtn.style.display = 'none';
+      activeResumeBtn.style.display = 'inline-block';
+      activeStopBtn.style.display = 'inline-block';
+    }
+
+    function resumeActiveTimer() {
+      activePauseBtn.style.display = 'inline-block';
+      activeResumeBtn.style.display = 'none';
+      activeStopBtn.style.display = 'none';
+      startCounting();
+    }
+
+    function stopActiveTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+      showDashboardView();
+    }
+
+    function manualToggleMode() {
+      clearInterval(timerId);
+      isRunning = false;
+      setupMode(currentMode === 'focus' ? 'break' : 'focus');
+      showDashboardView();
+    }
+
+    function resetTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+      timeLeft = durationMinutes * 60;
+      updateDisplay();
+      showDashboardView();
+    }
+
+    // Skrypt usuwający pasek tiiny.host z kodu strony
+    window.addEventListener('DOMContentLoaded', () => {
+      const removeTiinyBanner = () => {
+        document.querySelectorAll('a[href*="tiiny.host"]').forEach(el => {
+          let parent = el.closest('div');
+          if (parent && parent !== document.body && !parent.id.includes('Wrapper')) {
+            parent.remove();
+          } else {
+            el.remove();
+          }
+        });
+      };
+      removeTiinyBanner();
+      setTimeout(removeTiinyBanner, 500);
+      setTimeout(removeTiinyBanner, 1500);
+    });
+
+    setupMode('focus');
+    updateDisplay();
+    renderWeekTracker();
+    updateTodaySummary();
+  </script>
+</body>
+</html>

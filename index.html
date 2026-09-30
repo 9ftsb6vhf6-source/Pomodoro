@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<link rel="apple-touch-icon" href="icon.jpeg?v=2">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="apple-touch-icon" href="icon.jpeg?v=2">
   <title>Focus Timer</title>
   <style>
     * {
@@ -38,11 +39,6 @@
       text-align: center;
       width: 320px;
     }
-        @media (max-width: 1050px) {
-      .card {
-        order: -1;
-      }
-    }
     .side-card {
       background: #27272a;
       padding: 1.6rem;
@@ -53,6 +49,20 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* Na szerokim ekranie: kalendarz po lewej (1), zegar w środku (2), historia po prawej (3) */
+    @media (min-width: 1051px) {
+      .side-card:first-of-type {
+        order: 1;
+      }
+      .card {
+        order: 2;
+      }
+      .side-card:last-of-type {
+        order: 3;
+      }
+    }
+
     .side-card-header {
       display: flex;
       justify-content: space-between;
@@ -377,27 +387,12 @@
         font-size: 9rem;
       }
     }
-
   </style>
 </head>
 <body>
 
   <div class="wrapper" id="dashboardWrapper">
-    <!-- 1. Lewy panel: Kalendarz tygodniowy z sumą tygodnia -->
-    <div class="side-card">
-      <div class="side-card-header">
-        <button class="nav-btn" onclick="prevWeek()" title="Poprzedni tydzień">‹</button>
-        <div class="header-titles">
-          <h3 id="weekLabel">Ten tydzień</h3>
-          <span class="sub-info" id="weekRangeLabel">(od ... do ...)</span>
-          <span class="total-week-badge" id="weekTotalLabel">0 sesji (0 min skupienia)</span>
-        </div>
-        <button class="nav-btn" id="nextWeekBtn" onclick="nextWeek()" title="Następny tydzień">›</button>
-      </div>
-      <div class="week-days-list" id="weekDaysList"></div>
-    </div>
-
-    <!-- 2. Środkowy panel: Główny zegar -->
+    <!-- 1. GŁÓWNY ZEGAR (na małych ekranach/iPadzie jest na samej górze) -->
     <div class="card">
       <div id="status">Focus</div>
 
@@ -422,7 +417,21 @@
       </div>
     </div>
 
-    <!-- 3. Prawy panel: Dzisiejsza historia z podsumowaniem dnia -->
+    <!-- 2. ROZPISKA TYGODNIA -->
+    <div class="side-card">
+      <div class="side-card-header">
+        <button class="nav-btn" onclick="prevWeek()" title="Poprzedni tydzień">‹</button>
+        <div class="header-titles">
+          <h3 id="weekLabel">Ten tydzień</h3>
+          <span class="sub-info" id="weekRangeLabel">(od ... do ...)</span>
+          <span class="total-week-badge" id="weekTotalLabel">0 sesji (0 min skupienia)</span>
+        </div>
+        <button class="nav-btn" id="nextWeekBtn" onclick="nextWeek()" title="Następny tydzień">›</button>
+      </div>
+      <div class="week-days-list" id="weekDaysList"></div>
+    </div>
+
+    <!-- 3. DZISIEJSZE SESJE -->
     <div class="side-card">
       <div class="side-card-header">
         <div class="header-titles left-aligned">
